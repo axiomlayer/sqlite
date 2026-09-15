@@ -82,7 +82,8 @@
               doCheck = true;
               checkPhase = ''
                 runHook preCheck
-                test "$(./sqlite3 :memory: \"SELECT sqlite_compileoption_used('ENABLE_FTS5');\")" = 1
+                compile_option=$(./sqlite3 :memory: "SELECT sqlite_compileoption_used('ENABLE_FTS5');")
+                test "$compile_option" = 1
                 matches=$(./sqlite3 :memory: \
                   "CREATE VIRTUAL TABLE docs USING fts5(body); INSERT INTO docs(body) VALUES('axiom layer'); SELECT count(*) FROM docs WHERE docs MATCH 'axiom';")
                 test "$matches" = 1
@@ -92,7 +93,8 @@
               postInstall = ''
                 test -x "$out/bin/sqlite3"
                 test -d "$out/lib"
-                test "$("$out/bin/sqlite3" :memory: \"SELECT sqlite_compileoption_used('ENABLE_FTS5');\")" = 1
+                compile_option=$("$out/bin/sqlite3" :memory: "SELECT sqlite_compileoption_used('ENABLE_FTS5');")
+                test "$compile_option" = 1
               '';
             };
 

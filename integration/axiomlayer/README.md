@@ -42,3 +42,28 @@ the same Nix candidate package without rewriting the lock. A compatible drift
 still leaves the scheduled check red until a reviewed pin-update PR records the
 new Git and Fossil identities. This makes upstream movement visible without
 granting CI write or publish authority.
+
+## Dotfiles promotion follow-up
+
+The dotfiles #49 worktree is intentionally outside this branch. Its minimal
+reconciliation is:
+
+1. In `config/upstream-promotion-policy.json`, change SQLite's `acquisition` to
+   `fork` and `repository` to `AxiomLayer/sqlite`; keep `upstream` as
+   `sqlite.org/source`, keep version `3.53.4` and Git commit
+   `b09c88c14082339b66c7b7158d609a771e64ca69`, and add `gitMirror` =
+   `sqlite/sqlite` plus `fossilManifestUuid` =
+   `bf7c7f30031888f4e796e429ab3978879485813aaca6f641c7b33e4e09459bcc`.
+2. Permit those two provenance fields in the policy schema, require their exact
+   shapes for `id = sqlite`, and reject them on other source entries.
+3. Extend `SourcePolicy` and `validatePolicy()` with the same SQLite-only tuple;
+   remove the `provenance-mirror` acquisition exception.
+4. Rename the SQLite repository in `promotion/candidate.json`, then recompute
+   its `policySha256`. The source version and Git commit do not change.
+5. Update `test/upstream-promotion_test.ts` and
+   `docs/UPSTREAM-PROMOTION.md` to assert and explain the Fossil → official Git
+   mirror → AxiomLayer fork chain.
+
+No runtime artifact URL or digest changes as a consequence. Dotfiles #51
+correctly uses the final repository name `sqlite` for future immutable-release
+policy.
