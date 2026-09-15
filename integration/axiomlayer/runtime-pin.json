@@ -1,0 +1,36 @@
+{
+  "schema": "axiomlayer-sqlite-integration-v1",
+  "canonicalSource": {
+    "vcs": "fossil",
+    "repository": "https://sqlite.org/src",
+    "officialGitMirror": "https://github.com/sqlite/sqlite"
+  },
+  "integrationRepository": {
+    "repository": "AxiomLayer/sqlite",
+    "relationship": "github-fork-of-official-git-mirror",
+    "githubParent": "sqlite/sqlite",
+    "canonicalAuthority": "https://sqlite.org/src"
+  },
+  "fleetRelease": {
+    "version": "3.53.4",
+    "build": "3530400",
+    "archive": {
+      "url": "https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz",
+      "sha3-256": "454e45f61c6bd75b7420e7190732dea03ce6639c63ada47bbc592f67fc340338",
+      "sha256": "0e9483900e92cd5de8fd48d16bf9200145a61f7fd5be542a5ac81d8a9516eb9c",
+      "nixHash": "sha256-DpSDkA6SzV3o/UjRa/kgAUWmH3/VvlQqWsgdipUW65w="
+    },
+    "gitMirrorCommit": "b09c88c14082339b66c7b7158d609a771e64ca69",
+    "fossilManifestUuid": "bf7c7f30031888f4e796e429ab3978879485813aaca6f641c7b33e4e09459bcc"
+  },
+  "upstreamCandidate": {
+    "repository": "AxiomLayer/sqlite",
+    "gitMirrorCommit": "7936c5107fa4081c347852dc84054a7bb5c5fbe3",
+    "version": "3.54.0",
+    "fossilManifestUuid": "f065790f590f6e46de06cf72ac8613d69cf953146b520443ae1cf01848b3f32c"
+  },
+  "requiredCapability": {
+    "compileOption": "ENABLE_FTS5",
+    "acceptanceSql": "CREATE VIRTUAL TABLE docs USING fts5(body);"
+  }
+}
