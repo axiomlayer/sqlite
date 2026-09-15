@@ -41,6 +41,7 @@
             expectedVersion ? null,
             expectedFossilUuid ? null,
             verifyMirror ? false,
+            disableTcl ? false,
           }:
             pkgs.stdenv.mkDerivation {
               inherit pname src;
@@ -50,13 +51,12 @@
                 pkgs.gnugrep
                 pkgs.gnumake
                 pkgs.pkg-config
-                pkgs.tcl
               ];
               buildInputs = [ pkgs.zlib ];
               configureFlags = [
                 "--fts5"
                 "--disable-readline"
-              ];
+              ] ++ lib.optionals disableTcl [ "--disable-tcl" ];
               enableParallelBuilding = true;
 
               prePatch = lib.optionalString verifyMirror ''
@@ -109,6 +109,7 @@
             pname = "axiomlayer-sqlite-upstream-candidate";
             src = inputs.sqlite-candidate;
             verifyMirror = true;
+            disableTcl = true;
           };
 
           provenance = pkgs.runCommand "axiomlayer-sqlite-provenance" {
