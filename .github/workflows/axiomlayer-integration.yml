@@ -30,20 +30,11 @@ jobs:
       - name: Check out the candidate
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Install Nix
         uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-
-      - name: Bootstrap the initial lock
-        run: |
-          if [ ! -f flake.lock ]; then
-            nix flake lock
-            printf 'AXIOM_FLAKE_LOCK_BASE64='
-            base64 -w0 flake.lock
-            printf '\n'
-          fi
 
       - name: Build and verify the locked release and candidate
         run: nix flake check --no-update-lock-file --print-build-logs
@@ -67,7 +58,7 @@ jobs:
       - name: Check out the integration boundary
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Resolve official-mirror drift
@@ -76,9 +67,12 @@ jobs:
           locked=$(python3 -c 'import json; print(json.load(open("integration/axiomlayer/runtime-pin.json"))["upstreamCandidate"]["gitMirrorCommit"])')
           latest=$(git ls-remote https://github.com/sqlite/sqlite.git refs/heads/master | awk '{print $1}')
           case "$latest" in
-            [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) ;;
-            *) printf 'official mirror returned an invalid Git commit: %s\n' "$latest" >&2; exit 1 ;;
+            ''|*[!0-9a-f]*) printf 'official mirror returned an invalid Git commit: %s\n' "$latest" >&2; exit 1 ;;
           esac
+          [ "${#latest}" -eq 40 ] || {
+            printf 'official mirror returned a non-40-character Git commit: %s\n' "$latest" >&2
+            exit 1
+          }
           printf 'locked=%s\nlatest=%s\n' "$locked" "$latest"
           if [ "$latest" = "$locked" ]; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"

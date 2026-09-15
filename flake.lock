@@ -1,0 +1,63 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1789344334,
+        "narHash": "sha256-vdhpDJ3Lr24lkZ+fDCjmBRRtw9/vcSzkqGJOJyF5h2U=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "c3eea5b2156db11c7eeeada3dc737711255b253e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "c3eea5b2156db11c7eeeada3dc737711255b253e",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "sqlite-candidate": "sqlite-candidate",
+        "sqlite-fleet-mirror": "sqlite-fleet-mirror"
+      }
+    },
+    "sqlite-candidate": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789211558,
+        "narHash": "sha256-JEttLhOdlzdAKZkLWPE47w2pQj0CFQu5A5OldiohKSs=",
+        "owner": "AxiomLayer",
+        "repo": "sqlite",
+        "rev": "7936c5107fa4081c347852dc84054a7bb5c5fbe3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AxiomLayer",
+        "repo": "sqlite",
+        "rev": "7936c5107fa4081c347852dc84054a7bb5c5fbe3",
+        "type": "github"
+      }
+    },
+    "sqlite-fleet-mirror": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784919777,
+        "narHash": "sha256-tjmZGDf3uMchitP3qdINME1q2FJDfNPQoKg9LeLSxg8=",
+        "owner": "sqlite",
+        "repo": "sqlite",
+        "rev": "b09c88c14082339b66c7b7158d609a771e64ca69",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sqlite",
+        "repo": "sqlite",
+        "rev": "b09c88c14082339b66c7b7158d609a771e64ca69",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

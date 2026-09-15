@@ -59,6 +59,11 @@
               ];
               enableParallelBuilding = true;
 
+              prePatch = lib.optionalString verifyMirror ''
+                cc -g -o "$TMPDIR/sqlite-src-verify" tool/src-verify.c
+                "$TMPDIR/sqlite-src-verify" "$PWD"
+              '';
+
               preConfigure = ''
                 source_version=$(tr -d '\r\n' < VERSION)
                 test -n "$source_version"
@@ -72,10 +77,6 @@
                     grep -F ${lib.escapeShellArg expectedFossilUuid} sqlite3.c >/dev/null
                   fi
                 ''}
-              '';
-
-              postConfigure = lib.optionalString verifyMirror ''
-                make verify-source
               '';
 
               doCheck = true;
