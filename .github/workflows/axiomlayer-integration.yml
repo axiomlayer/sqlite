@@ -1,0 +1,102 @@
+name: AxiomLayer SQLite integration
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - "codex/**"
+      - "axiomlayer/**"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sqlite-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NIX_CONFIG: experimental-features = nix-command flakes
+
+jobs:
+  pinned-integration:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out the candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+
+      - name: Build and verify the locked release and candidate
+        run: nix flake check --no-update-lock-file --print-build-logs
+
+      - name: Prove Python loads both FTS5 builds
+        run: |
+          fleet_path=$(nix build --no-link --print-out-paths .#fleet-release)
+          candidate_path=$(nix build --no-link --print-out-paths .#upstream-candidate)
+          candidate_version=$($candidate_path/bin/sqlite3 :memory: 'SELECT sqlite_version();')
+          integration/axiomlayer/probe-python.sh "$fleet_path" 3.53.4
+          integration/axiomlayer/probe-python.sh "$candidate_path" "$candidate_version"
+
+      - name: Refuse an uncommitted lock rewrite
+        run: git diff --exit-code -- flake.lock
+
+  scheduled-upstream-candidate:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out the integration boundary
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Resolve official-mirror drift
+        id: upstream
+        run: |
+          locked=$(python3 -c 'import json; print(json.load(open("integration/axiomlayer/runtime-pin.json"))["upstreamCandidate"]["gitMirrorCommit"])')
+          latest=$(git ls-remote https://github.com/sqlite/sqlite.git refs/heads/master | awk '{print $1}')
+          case "$latest" in
+            ''|*[!0-9a-f]*) printf 'official mirror returned an invalid Git commit: %s\n' "$latest" >&2; exit 1 ;;
+          esac
+          [ "${#latest}" -eq 40 ] || {
+            printf 'official mirror returned a non-40-character Git commit: %s\n' "$latest" >&2
+            exit 1
+          }
+          printf 'locked=%s\nlatest=%s\n' "$locked" "$latest"
+          if [ "$latest" = "$locked" ]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Nix for a newly observed candidate
+        if: steps.upstream.outputs.changed == 'true'
+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+
+      - name: Build and probe the exact newly observed commit
+        if: steps.upstream.outputs.changed == 'true'
+        env:
+          UPSTREAM_SHA: ${{ steps.upstream.outputs.latest }}
+        run: |
+          candidate_path=$(nix build --no-link --print-out-paths \
+            --no-write-lock-file \
+            --override-input sqlite-candidate "github:sqlite/sqlite/$UPSTREAM_SHA" \
+            .#upstream-candidate)
+          candidate_version=$($candidate_path/bin/sqlite3 :memory: 'SELECT sqlite_version();')
+          integration/axiomlayer/probe-python.sh "$candidate_path" "$candidate_version"
+          printf 'upstream_candidate_sha=%s\nupstream_candidate_version=%s\n' \
+            "$UPSTREAM_SHA" "$candidate_version"
+          printf 'The candidate passed; record its Git and Fossil identities in a reviewed pin-update PR.\n' >&2
+          exit 1
